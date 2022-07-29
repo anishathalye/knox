@@ -12,32 +12,32 @@
  done
  done?
  evaluate-to-next-hint
- (except-out (struct-out merge) merge)
+ (except-out (struct-out merge!) merge!)
  (except-out (struct-out fixpoint) fixpoint)
- (except-out (struct-out case-split) case-split)
+ (except-out (struct-out case-split!) case-split!)
  (struct-out debug*)
  (except-out (struct-out tactic) tactic)
  (except-out (struct-out get-state) get-state)
- (except-out (struct-out concretize) concretize)
- (except-out (struct-out overapproximate) overapproximate)
- (except-out (struct-out overapproximate-pc) overapproximate-pc)
- (except-out (struct-out replace) replace)
- (except-out (struct-out remember) remember)
- (except-out (struct-out subst) subst)
- (except-out (struct-out clear) clear)
+ (except-out (struct-out concretize!) concretize!)
+ (except-out (struct-out overapproximate!) overapproximate!)
+ (except-out (struct-out overapproximate-pc!) overapproximate-pc!)
+ (except-out (struct-out replace!) replace!)
+ (except-out (struct-out remember!) remember!)
+ (except-out (struct-out subst!) subst!)
+ (except-out (struct-out clear!) clear!)
  (rename-out
   [tactic# tactic]
   [get-state# get-state]
-  [merge# merge]
+  [merge!# merge!]
   [fixpoint# fixpoint]
-  [case-split# case-split]
-  [concretize# concretize]
-  [overapproximate# overapproximate]
-  [overapproximate-pc# overapproximate-pc]
-  [replace# replace]
-  [remember# remember]
-  [subst# subst]
-  [clear# clear])
+  [case-split!# case-split!]
+  [concretize!# concretize!]
+  [overapproximate!# overapproximate!]
+  [overapproximate-pc!# overapproximate-pc!]
+  [replace!# replace!]
+  [remember!# remember!]
+  [subst!# subst!]
+  [clear!# clear!])
  make-hintdb
  extend-hintdb)
 
@@ -101,16 +101,16 @@
     [(_ args ...) #'(get-state-hint args ...)]
     [_ #'get-state-hint]))
 
-(struct merge hint (key k))
+(struct merge! hint (key k))
 
-(define (merge-hint [key (lambda (st) #t)])
-  (wrap (merge key)))
+(define (merge!-hint [key (lambda (st) #t)])
+  (wrap (merge! key)))
 
-(define-match-expander merge#
-  (syntax-parser [(_ args ...) #'(merge args ...)])
+(define-match-expander merge!#
+  (syntax-parser [(_ args ...) #'(merge! args ...)])
   (syntax-parser
-    [(_ args ...) #'(merge-hint args ...)]
-    [_ #'merge-hint]))
+    [(_ args ...) #'(merge!-hint args ...)]
+    [_ #'merge!-hint]))
 
 (struct fixpoint (setup-cycles auto-detect cycle-length step-concretize-lens use-pc piecewise step-overapproximate-lens k))
 
@@ -123,96 +123,96 @@
     [(_ args ...) #'(fixpoint-constructor args ...)]
     [_ #'fixpoint-constructor]))
 
-(struct case-split hint (splits use-equalities k))
+(struct case-split! hint (splits use-equalities k))
 
-(define (case-split-hint splits #:use-equalities [use-equalities #f])
-  (wrap (case-split splits use-equalities)))
+(define (case-split!-hint splits #:use-equalities [use-equalities #f])
+  (wrap (case-split! splits use-equalities)))
 
-(define-match-expander case-split#
-  (syntax-parser [(_ args ...) #'(case-split args ...)])
+(define-match-expander case-split!#
+  (syntax-parser [(_ args ...) #'(case-split! args ...)])
   (syntax-parser
-    [(_ args ...) #'(case-split-hint args ...)]
-    [_ #'case-split-hint]))
+    [(_ args ...) #'(case-split!-hint args ...)]
+    [_ #'case-split!-hint]))
 
-;; for debugging merges: basically acts like a merge and calls the
+;; for debugging merges: basically acts like a merge! and calls the
 ;; callback with all the paths
 ;;
 ;; return value is not used (unlike other hints, which return another hint
 (struct debug* hint (callback))
 
-(struct concretize hint (lens use-pc use-equalities piecewise k))
+(struct concretize! hint (lens use-pc use-equalities piecewise k))
 
-(define (concretize-hint lens #:piecewise [piecewise #f] #:use-pc [use-pc #f] #:use-equalities [use-equalities #f])
-  (wrap (concretize lens use-pc use-equalities piecewise)))
+(define (concretize!-hint lens #:piecewise [piecewise #f] #:use-pc [use-pc #f] #:use-equalities [use-equalities #f])
+  (wrap (concretize! lens use-pc use-equalities piecewise)))
 
-(define-match-expander concretize#
-  (syntax-parser [(_ args ...) #'(concretize args ...)])
+(define-match-expander concretize!#
+  (syntax-parser [(_ args ...) #'(concretize! args ...)])
   (syntax-parser
-    [(_ args ...) #'(concretize-hint args ...)]
-    [_ #'concretize-hint]))
+    [(_ args ...) #'(concretize!-hint args ...)]
+    [_ #'concretize!-hint]))
 
-(struct overapproximate hint (lens k))
+(struct overapproximate! hint (lens k))
 
-(define (overapproximate-hint lens)
-  (wrap (overapproximate lens)))
+(define (overapproximate!-hint lens)
+  (wrap (overapproximate! lens)))
 
-(define-match-expander overapproximate#
-  (syntax-parser [(_ args ...) #'(overapproximate args ...)])
+(define-match-expander overapproximate!#
+  (syntax-parser [(_ args ...) #'(overapproximate! args ...)])
   (syntax-parser
-    [(_ args ...) #'(overapproximate-hint args ...)]
-    [_ #'overapproximate-hint]))
+    [(_ args ...) #'(overapproximate!-hint args ...)]
+    [_ #'overapproximate!-hint]))
 
-(struct overapproximate-pc hint (pc use-equalities k))
+(struct overapproximate-pc! hint (pc use-equalities k))
 
-(define (overapproximate-pc-hint pc #:use-equalities [use-equalities #f])
-  (wrap (overapproximate-pc pc use-equalities)))
+(define (overapproximate-pc!-hint pc #:use-equalities [use-equalities #f])
+  (wrap (overapproximate-pc! pc use-equalities)))
 
-(define-match-expander overapproximate-pc#
-  (syntax-parser [(_ args ...) #'(overapproximate-pc args ...)])
+(define-match-expander overapproximate-pc!#
+  (syntax-parser [(_ args ...) #'(overapproximate-pc! args ...)])
   (syntax-parser
-    [(_ args ...) #'(overapproximate-pc-hint args ...)]
-    [_ #'overapproximate-pc-hint]))
+    [(_ args ...) #'(overapproximate-pc!-hint args ...)]
+    [_ #'overapproximate-pc!-hint]))
 
-(struct replace hint (lens term use-pc use-equalities k))
+(struct replace! hint (lens term use-pc use-equalities k))
 
-(define (replace-hint lens term #:use-pc [use-pc #f] #:use-equalities [use-equalities #f])
-  (wrap (replace lens term use-pc use-equalities)))
+(define (replace!-hint lens term #:use-pc [use-pc #f] #:use-equalities [use-equalities #f])
+  (wrap (replace! lens term use-pc use-equalities)))
 
-(define-match-expander replace#
-  (syntax-parser [(_ args ...) #'(replace args ...)])
+(define-match-expander replace!#
+  (syntax-parser [(_ args ...) #'(replace! args ...)])
   (syntax-parser
-    [(_ args ...) #'(replace-hint args ...)]
-    [_ #'replace-hint]))
+    [(_ args ...) #'(replace!-hint args ...)]
+    [_ #'replace!-hint]))
 
-(struct remember hint (lens name k))
+(struct remember! hint (lens name k))
 
-(define (remember-hint lens [name #f])
-  (wrap (remember lens name)))
+(define (remember!-hint lens [name #f])
+  (wrap (remember! lens name)))
 
-(define-match-expander remember#
-  (syntax-parser [(_ args ...) #'(remember args ...)])
+(define-match-expander remember!#
+  (syntax-parser [(_ args ...) #'(remember! args ...)])
   (syntax-parser
-    [(_ args ...) #'(remember-hint args ...)]
-    [_ #'remember-hint]))
+    [(_ args ...) #'(remember!-hint args ...)]
+    [_ #'remember!-hint]))
 
-(struct subst hint (lens variable k))
+(struct subst! hint (lens variable k))
 
-(define (subst-hint lens [variable #f])
-  (wrap (subst lens variable)))
+(define (subst!-hint lens [variable #f])
+  (wrap (subst! lens variable)))
 
-(define-match-expander subst#
-  (syntax-parser [(_ args ...) #'(subst args ...)])
+(define-match-expander subst!#
+  (syntax-parser [(_ args ...) #'(subst! args ...)])
   (syntax-parser
-    [(_ args ...) #'(subst-hint args ...)]
-    [_ #'subst-hint]))
+    [(_ args ...) #'(subst!-hint args ...)]
+    [_ #'subst!-hint]))
 
-(struct clear hint (variable k))
+(struct clear! hint (variable k))
 
-(define (clear-hint [variable #f])
-  (wrap (clear variable)))
+(define (clear!-hint [variable #f])
+  (wrap (clear! variable)))
 
-(define-match-expander clear#
-  (syntax-parser [(_ args ...) #'(clear args ...)])
+(define-match-expander clear!#
+  (syntax-parser [(_ args ...) #'(clear! args ...)])
   (syntax-parser
-    [(_ args ...) #'(clear-hint args ...)]
-    [_ #'clear-hint]))
+    [(_ args ...) #'(clear!-hint args ...)]
+    [_ #'clear!-hint]))

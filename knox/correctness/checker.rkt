@@ -160,7 +160,7 @@
          (set! working (cons (execution st (protected-evaluate-to-next-hint k)) working))]
         [(get-state k)
          (set! working (cons (execution st (protected-evaluate-to-next-hint k st)) working))]
-        [(concretize lens use-pc use-equalities piecewise k)
+        [(concretize! lens use-pc use-equalities piecewise k)
          (define full-lens (@lens-thrush top-view lens))
          (define effective-pc (@&&
                                (if use-pc pc #t)
@@ -169,7 +169,7 @@
                                        (lambda (view) (@concretize view effective-pc #:piecewise piecewise))))
          (define st* (state ist* pc equalities))
          (set! working (cons (execution st* (protected-evaluate-to-next-hint k)) working))]
-        [(overapproximate lens k)
+        [(overapproximate! lens k)
          (define full-lens (@lens-thrush top-view lens))
          (define view (@lens-view full-lens ist))
          (define overapprox-view (@overapproximate view))
@@ -178,7 +178,7 @@
          (define ist* (@lens-set full-lens ist overapprox-view))
          (define st* (state ist* pc equalities))
          (set! working (cons (execution st* (protected-evaluate-to-next-hint k overapprox-view)) working))]
-        [(overapproximate-pc new-pc use-equalities k)
+        [(overapproximate-pc! new-pc use-equalities k)
           (define effective-pc (if use-equalities
                                    (@&& pc (equalities->bool equalities))
                                    pc))
@@ -186,7 +186,7 @@
             (error 'run-hint! "hint overapproximate-pc: not an overapproximation"))
           (define st* (state ist new-pc equalities))
           (set! working (cons (execution st* (protected-evaluate-to-next-hint k)) working))]
-        [(replace lens view use-pc use-equalities k)
+        [(replace! lens view use-pc use-equalities k)
          (define full-lens (@lens-thrush top-view lens))
          (define current-view (@lens-view full-lens ist))
          (define effective-pc (@&&
@@ -197,7 +197,7 @@
          (define ist* (@lens-set full-lens ist view))
          (define st* (state ist* pc equalities))
          (set! working (cons (execution st* (protected-evaluate-to-next-hint k)) working))]
-        [(remember lens name k)
+        [(remember! lens name k)
          (define full-lens (@lens-thrush top-view lens))
          (define current-view (@lens-view full-lens ist))
          (define current-type (@type-of current-view))
@@ -208,7 +208,7 @@
          (define st* (state ist* pc (hash-set equalities new-var current-view)))
          ;; pass new variable to callback...
          (set! working (cons (execution st* (protected-evaluate-to-next-hint k new-var)) working))]
-        [(subst lens var k)
+        [(subst! lens var k)
          (define full-lens (@lens-thrush top-view lens))
          (define ist* (@lens-transform full-lens ist (lambda (view)
                                                        (if var
@@ -216,7 +216,7 @@
                                                            (@substitute-terms view equalities)))))
          (define st* (state ist* pc equalities))
          (set! working (cons (execution st* (protected-evaluate-to-next-hint k)) working))]
-        [(clear var k)
+        [(clear! var k)
          (define equalities* (if var
                                  (if (list? var)
                                      (for/fold ([equalities equalities])
@@ -226,10 +226,10 @@
                                  (hasheq)))
          (define st* (state ist pc equalities*))
          (set! working (cons (execution st* (protected-evaluate-to-next-hint k)) working))]
-        [(case-split splits* use-equalities k)
+        [(case-split! splits* use-equalities k)
          (define splits (do-case-split st use-equalities splits*))
          (set! working (append (map (lambda (st) (execution st (protected-evaluate-to-next-hint k))) splits) working))]
-        [(? merge?)
+        [(? merge!?)
          ;; put on waiting list
          (set! waiting (cons st waiting))
          (set! debug*-hint #f)
@@ -277,7 +277,7 @@
       (define by-pc-eq (group-by (lambda (st) (cons (state-pc st) (state-equalities st))) waiting))
       (define free-vars-seteq (weak-seteq->seteq free-variables))
       (define merged (apply append (map (lambda (st) (merge-states-for-pc-eq st free-vars-seteq)) by-pc-eq)))
-      (define k (merge-k merge-hint))
+      (define k (merge!-k merge-hint))
       (set! working (map (lambda (st) (execution st (protected-evaluate-to-next-hint k))) merged))
       (dprintf "info: merged, reduced from ~v states to ~v states~n" (length waiting) (length working))
       (set! waiting '())
@@ -312,7 +312,7 @@
             (define s (state-interpreter st))
             (if (interp:finished? s) (interp:finished-circuit s) (interp:globals-circuit (interp:state-globals s))))
           sts)
-         (merge-key merge-hint)
+         (merge!-key merge-hint)
          effective-pc
          free-vars-seteq))
       (for/list ([ckt ckts])
