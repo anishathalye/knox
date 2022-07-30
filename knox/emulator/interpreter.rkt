@@ -178,7 +178,7 @@
     ;; vector (only immutable)
     vector? vector-immutable vector-length vector-ref vector-set vector->list list->immutable-vector
     ;; boolean
-    not
+    not ! && || => <=>
     ;; integer
     + - * quotient modulo zero? add1 sub1 abs max min = < <= > >= expt integer?
     ;; bv
