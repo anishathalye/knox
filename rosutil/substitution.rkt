@@ -66,6 +66,6 @@
     (check-equal? v* (list (foo 1 2) 3)))
 
   (test-case "mutability"
-    (@define-symbolic x @integer?)
+    (@define-symbolic* x @integer?)
     (check-true (immutable? (substitute (vector-immutable 1 2 x) x 3)))
     (check-false (immutable? (substitute (vector 1 2 x) x 3)))))

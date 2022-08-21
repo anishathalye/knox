@@ -39,7 +39,18 @@
         #:break (not l1)
         (rec x1 x2 l1 l2 s)))
     (match v1
-      [(? @union?) (mismatched-fail)] ; give up
+      [_ ; is either a union?
+       #:when (or (@union? v1) (@union? v2))
+       ;; pretty much the same as an expression
+       (cond
+         [(equal? v1 v2)
+          (let ([sym (list->seteq (@symbolics (@list v1 v2)))])
+            (cond
+              ;; can we skip adding these terms? i.e. they do not contain any symbolics in keep-symbolics?
+              [(set-empty? (set-intersect sym keep-symbolics))
+               (values l1 l2 (set-union s sym))]
+              [else (values (cons v1 l1) (cons v2 l2) s)]))]
+         [else (values (cons v1 l1) (cons v2 l2) s)])]
       [(or (? @expression?) (? @constant?))
        (cond
          [(equal? (@type-of v1) (@type-of v2))
@@ -108,7 +119,6 @@
          [_ (mismatched-fail)])]
       [_
        (match v2
-         [(? @union?) (mismatched-fail)] ; give up
          [(or (? @expression?) (? @constant?))
           (cond
             [(equal? (@type-of v1) (@type-of v2))
@@ -132,63 +142,63 @@
   (require rosette/safe rackunit)
 
   (test-case "mismatched: symbolics"
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2 s) (mismatched x y))
     (check-equal? l1 (list x))
     (check-equal? l2 (list y))
     (check-equal? s (seteq)))
 
   (test-case "mismatched: fully matched"
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2 s) (mismatched (list 1 2 x y) (list 1 2 x y)))
     (check-equal? l1 '())
     (check-equal? l2 '())
     (check-equal? s (seteq x y)))
 
   (test-case "mismatched: cons"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2 s) (mismatched (cons x x) (cons x y)))
     (check-equal? l1 (list x))
     (check-equal? l2 (list y))
     (check-equal? s (seteq x)))
 
   (test-case "mismatched: length mismatch"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2 s) (mismatched (list x y 0) (list x y)))
     (check-false l1)
     (check-false l2)
     (check-equal? s (seteq)))
 
   (test-case "mismatched: vector"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2 s) (mismatched (vector x (cons y 3)) (vector x (cons x 3))))
     (check-equal? l1 (list y))
     (check-equal? l2 (list x))
     (check-equal? s (seteq x)))
 
   (test-case "mismatched: vector length mismatch"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2 s) (mismatched (vector x y 0) (vector x y)))
     (check-false l1)
     (check-false l2)
     (check-equal? s (seteq)))
 
   (test-case "mismatched: constants"
-    (define-symbolic x integer?)
+    (define-symbolic* x integer?)
     (define-values (l1 l2 s) (mismatched (list 1 x) (list x 1)))
     (check-equal? l1 (list x 1))
     (check-equal? l2 (list 1 x))
     (check-equal? s (seteq)))
 
   (test-case "mismatched: constants mismatched"
-    (define-symbolic x integer?)
+    (define-symbolic* x integer?)
     (define-values (l1 l2 s) (mismatched (list 1 3 4 x) (list 7 3 6 8)))
     (check-false l1)
     (check-false l2)
     (check-equal? s (seteq)))
 
   (test-case "mismatched: type mismatch"
-    (define-symbolic x boolean?)
+    (define-symbolic* x boolean?)
     (define-values (l1 l2 s) (mismatched (list 1 3 4 x) (list 7 3 6 8)))
     (check-false l1)
     (check-false l2)
@@ -196,7 +206,7 @@
 
   (test-case "mismatched: struct"
     (struct foo (a b) #:transparent)
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2 s) (mismatched (foo (cons x y) 3) (foo (cons y y) x)))
     (check-equal? l1 (list 3 x))
     (check-equal? l2 (list x y))
@@ -205,7 +215,7 @@
   (test-case "mismatched: struct type mismatch"
     (struct foo (a b) #:transparent)
     (struct bar (a b) #:transparent)
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2 s) (mismatched (foo x y) (bar x y)))
     (check-false l1)
     (check-false l2)
@@ -214,14 +224,14 @@
   (test-case "mismatched: nested structs, lists, etc."
     (struct foo (a b) #:transparent)
     (struct bar (a b) #:transparent)
-    (define-symbolic x y z integer?)
+    (define-symbolic* x y z integer?)
     (define-values (l1 l2 s) (mismatched (foo (bar x y) (foo 1 (list 3 z))) (foo (bar x x) (foo 1 (list y 5)))))
     (check-equal? l1 (list z 3 y))
     (check-equal? l2 (list 5 y x))
     (check-equal? s (seteq x)))
 
   (test-case "mismatched: keep-symbolics are not discarded"
-    (define-symbolic x y (bitvector 8))
+    (define-symbolic* x y (bitvector 8))
     (define-values (l1 l2 s) (mismatched (list x y) (list x y)))
     (check-equal? l1 '())
     (check-equal? l2 '())
@@ -232,7 +242,7 @@
     (check-equal? s* (seteq y)))
 
   (test-case "mismatched: keep-symbolics are not discarded, with integer type"
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2 s) (mismatched (list x y) (list x y)))
     (check-equal? l1 '())
     (check-equal? l2 '())
@@ -240,11 +250,30 @@
     (define-values (l1* l2* s*) (mismatched (list x y) (list x y) #:keep (seteq x)))
     (check-equal? l1* (list x))
     (check-equal? l2* (list x))
-    (check-equal? s* (seteq y))))
+    (check-equal? s* (seteq y)))
+
+  (test-case "mismatched: union"
+    (define-symbolic* x y integer?)
+    (define-symbolic* b boolean?)
+    (define-values (l1 l2 s) (mismatched x (if b y #f)))
+    (check-equal? l1 (list x))
+    (check-equal? l2 (list (if b y #f)))
+    (check-equal? s (seteq))
+    (define-values (l1* l2* s*) (mismatched (if b y #f) x))
+    (check-equal? l1* (list (if b y #f)))
+    (check-equal? l2* (list x))
+    (check-equal? s* (seteq)))
+
+  (test-case "mismatched: union, equal"
+    (define-symbolic* x y integer?)
+    (define-symbolic* b boolean?)
+    (define-values (l1 l2 s) (mismatched (list 3 (if b y #f)) (list x (if b y #f))))
+    (check-equal? l1 (list 3))
+    (check-equal? l2 (list x))
+    (check-equal? s (seteq b y))))
 
 (define (terms-subsumed? free-symbolics small small-cond big big-cond)
-  (let* ([types (map @type-of small)]
-         [temp (map (curry @fresh-symbolic '__temp) types)]
+  (let* ([temp (map @fresh-symbolic-like small)]
          [free-list (set->list free-symbolics)]
          [small-body (@and small-cond (@equal? small temp))]
          [small-can-match (@exists free-list small-body)]
@@ -256,8 +285,7 @@
 
 ;; an alternative implementation that returns a useful model (the above implementation doesn't because everything is under quantifiers)
 (define (terms-subsumed*? free-symbolics small small-cond big big-cond)
-  (let* ([types (map @type-of small)]
-         [temp (map (curry @fresh-symbolic '__temp) types)]
+  (let* ([temp (map @fresh-symbolic-like small)]
          [free-list (set->list free-symbolics)]
          [body (@and (@equal? big temp) big-cond)]
          ;; could also encode the "not exists" as a "forall not"; performance seems to be equivalent
@@ -481,7 +509,9 @@
       #:break (not l1)
       (flatten2 x1 x2 l1 l2 #:fail-fast fail-fast)))
   (match v1
-    [(? @union?) (flatten2-fail)] ; give up
+    [_ ; is either a union?
+     #:when (or (@union? v1) (@union? v2))
+     (values (cons v1 l1) (cons v2 l2))]
     [(or (? @expression?) (? @constant?))
      (cond
        [(equal? (@type-of v1) (@type-of v2)) (values (cons v1 l1) (cons v2 l2))]
@@ -550,62 +580,62 @@
 
 (module+ test
   (test-case "flatten2: symbolics"
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2) (flatten2 x y))
     (check-equal? l1 (list x))
     (check-equal? l2 (list y)))
 
   (test-case "flatten2: fully matched"
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2) (flatten2 (list 1 2 x y) (list 1 2 x y)))
     (check-equal? l1 (list y x 2 1))
     (check-equal? l2 (list y x 2 1)))
 
   (test-case "flatten2: cons"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2) (flatten2 (cons x x) (cons x y)))
     (check-equal? l1 (list x x))
     (check-equal? l2 (list y x)))
 
   (test-case "flatten2: length mismatch"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2) (flatten2 (list x y 0) (list x y)))
     (check-false l1)
     (check-false l2))
 
   (test-case "flatten2: vector"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2) (flatten2 (vector x (cons y 3)) (vector x (cons x 3))))
     (check-equal? l1 (list 3 y x))
     (check-equal? l2 (list 3 x x)))
 
   (test-case "flatten2: vector length mismatch"
-    (define-symbolic x y (bitvector 10))
+    (define-symbolic* x y (bitvector 10))
     (define-values (l1 l2) (flatten2 (vector x y 0) (vector x y)))
     (check-false l1)
     (check-false l2))
 
   (test-case "flatten2: constants"
-    (define-symbolic x integer?)
+    (define-symbolic* x integer?)
     (define-values (l1 l2) (flatten2 (list 1 x) (list x 1)))
     (check-equal? l1 (list x 1))
     (check-equal? l2 (list 1 x)))
 
   (test-case "flatten2: constants mismatch"
-    (define-symbolic x integer?)
+    (define-symbolic* x integer?)
     (define-values (l1 l2) (flatten2 (list 1 3 4 x) (list 7 3 6 8)))
     (check-equal? l1 (list x 4 3 1))
     (check-equal? l2 (list 8 6 3 7)))
 
   (test-case "flatten2: type mismatch"
-    (define-symbolic x boolean?)
+    (define-symbolic* x boolean?)
     (define-values (l1 l2) (flatten2 (list 1 3 4 x) (list 7 3 6 8)))
     (check-false l1)
     (check-false l2))
 
   (test-case "flatten2: struct"
     (struct foo (a b) #:transparent)
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2) (flatten2 (foo (cons x y) 3) (foo (cons y y) x)))
     (check-equal? l1 (list 3 y x))
     (check-equal? l2 (list x y y)))
@@ -613,7 +643,7 @@
   (test-case "flatten2: struct type mismatch"
     (struct foo (a b) #:transparent)
     (struct bar (a b) #:transparent)
-    (define-symbolic x y integer?)
+    (define-symbolic* x y integer?)
     (define-values (l1 l2) (flatten2 (foo x y) (bar x y)))
     (check-false l1)
     (check-false l2))
@@ -621,10 +651,21 @@
   (test-case "flatten2: nested structs, lists, etc."
     (struct foo (a b) #:transparent)
     (struct bar (a b) #:transparent)
-    (define-symbolic x y z integer?)
+    (define-symbolic* x y z integer?)
     (define-values (l1 l2) (flatten2 (foo (bar x y) (foo 1 (list 3 z))) (foo (bar x x) (foo 1 (list y 5)))))
     (check-equal? l1 (list z 3 1 y x))
-    (check-equal? l2 (list 5 y 1 x x))))
+    (check-equal? l2 (list 5 y 1 x x)))
+
+  (test-case "flatten2: union"
+    (define-symbolic* x y integer?)
+    (define-symbolic* b boolean?)
+    (define a (if b x #t))
+    (define-values (l1 l2) (flatten2 (list x y) (list x a)))
+    (check-equal? l1 (list y x))
+    (check-equal? l2 (list a x))
+    (define-values (l1* l2*) (flatten2 (list 1 2) (if b (list x) (list x y))))
+    (check-equal? l1* (list (list 1 2)))
+    (check-equal? l2* (list (if b (list x) (list x y))))))
 
 ;; a "more obviously correct" implementation used to cross-check subsumed? in tests
 ;; (if correct impl returns false, efficient impl should return false)
@@ -846,34 +887,6 @@
     ;; p is enough to show that s5 is subsumed by s6
     (check-subsumed true #f s5 p s6 R*))
 
-  ;; subsumption with existing vc (pc)
-  ;; does it interfere with the forall / exists?
-  ;;
-  ;; not supported anymore; vc should be true
-  #;(test-case "subsumed?: interaction with (vc)"
-    (define-symbolic* x integer?)
-    #;(check-subsumed false #f x #t 0 #t)
-    (define p (equal? x 0))
-    #;(check-subsumed true #f x p 0 p)
-    ;; should be effectively the same thing as above
-    (check-pred
-     normal?
-     (with-vc
-       (begin
-         (assume p)
-         (check-subsumed true #f x #t 0 #t))))
-
-    #;(check-subsumed true #f 0 #t x #t)
-    (define p2 (odd? x))
-    #;(check-subsumed false #f 0 p2 x p2)
-    ;; should be effectively the same thing as above
-    (check-pred
-     normal?
-     (with-vc
-       (begin
-         (assume p2)
-         (check-subsumed false #f 0 #t x #t)))))
-
   (test-case "subsumed?: case-split-merge"
     ;; consider a circuit writing to a memory based on whether x = 0 or x = 1
     ;; say it's a 8-bit bitvector, but we have a precondition that x < 2
@@ -918,4 +931,80 @@
     (check-subsumed true (seteq fresh) st1 pc1 joined pc1)
     ;; but if we have the wrong path condition, it's no longer true
     (check-subsumed false (seteq fresh) st0 pc0 joined pc1)
-    (check-subsumed false (seteq fresh) st1 pc1 joined pc0)))
+    (check-subsumed false (seteq fresh) st1 pc1 joined pc0))
+
+  (test-case "subsumed?: union, basic"
+    (define-symbolic* x y integer?)
+    (define-symbolic* b boolean?)
+    (check-subsumed true #f (list 1 2) #t (if b (list x) (list x y)) #t))
+
+  (test-case "subsumed?: union, more complex"
+    (define-symbolic* b b* boolean?)
+    (define-symbolic* x y integer?)
+
+    (define v1 (list x))
+    (define v2 (if b x (list x)))
+    ;; v1 <= v2
+    (check-subsumed true #f v1 #t v2 #t)
+    (check-subsumed false #f v2 #t v1 #t)
+
+    (define v3 (if b (list x) (list x y)))
+    ;; v1 <= v3
+    (check-subsumed true #f v1 #t v3 #t)
+    (check-subsumed false #f v3 #t v1 #t)
+    (check-subsumed false #f v2 #t v3 #t)
+    (check-subsumed false #f v3 #t v2 #t)
+
+    (define v4 (if b (if b* y (list y)) (list y x)))
+    ;; v1 <= v4
+    ;; v2 <= v4
+    ;; v3 <= v4
+    (check-subsumed true #f v1 #t v4 #t)
+    (check-subsumed true #f v2 #t v4 #t)
+    (check-subsumed true #f v3 #t v4 #t)
+    (check-subsumed false #f v4 #t v1 #t)
+    (check-subsumed false #f v4 #t v2 #t)
+    (check-subsumed false #f v4 #t v3 #t))
+
+  (test-case "subsumed?: union, nested"
+    (define-symbolic* b b* b** boolean?)
+    (define-symbolic* x y integer?)
+    (define v1 (list x))
+    (define v2 (if b x (list x x)))
+    (define v3 (if b x (if b* (list x) (list x y))))
+    (define v4 (if b** v1 (vector v2))) ; nested unions
+    (define v5 (if b** v1 (vector v3))) ; nested unions
+    (check-subsumed true #f v4 #t v5 #t)
+    (check-subsumed false #f v5 #t v4 #t))
+
+  (test-case "subsumed?: union, guards"
+    (define-symbolic* b boolean?)
+    (define-symbolic* x y integer?)
+    (define v1 (if b x (list x)))
+    (define v2 (if b (list x) x))
+    (check-subsumed true #f v1 #t v2 #t)
+    (check-subsumed true #f v2 #t v1 #t)
+    (define v3 (list b v1))
+    (define v4 (list b v2))
+    (check-subsumed false #f v3 #t v4 #t)
+    (check-subsumed false #f v4 #t v3 #t))
+
+  (test-case "subsumed? union, with some concrete values"
+    (define-symbolic* b b* boolean?)
+    (define-symbolic* x y integer?)
+    (define v1 (if b b 3))
+    (define v2 (if b b x))
+    (check-subsumed true #f v1 #t v2 #t)
+    (check-subsumed false #f v2 #t v1 #t)
+    (define v3 (if b #f x))
+    (check-subsumed false #f v1 #t v3 #t)
+    (check-subsumed false #f v3 #t v1 #t)
+    (check-subsumed false #f v2 #t v3 #t)
+    (check-subsumed false #f v3 #t v2 #t)
+    (define v4 (if b b* x))
+    (check-subsumed true #f v1 #t v4 #t)
+    (check-subsumed true #f v2 #t v4 #t)
+    (check-subsumed true #f v3 #t v4 #t)
+    (check-subsumed false #f v4 #t v1 #t)
+    (check-subsumed false #f v4 #t v2 #t)
+    (check-subsumed false #f v4 #t v3 #t)))

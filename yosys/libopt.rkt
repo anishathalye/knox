@@ -19,7 +19,7 @@
   (require rackunit)
 
   (test-case "rewrite-if"
-    (@define-symbolic x (@bitvector 1))
+    (@define-symbolic* x (@bitvector 1))
     (define y (@if (@bveq x (@bv 0 1)) (@bv 0 1) (@bv 1 1)))
     (check-equal? (rewrite-if y) x)))
 

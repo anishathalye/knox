@@ -12,6 +12,7 @@
   [fresh-symbolic (-> (or/c symbol? string?)
                       @solvable?
                       @constant?)]
+  [fresh-symbolic-like (-> any/c any/c)]
   [symbolic-from-id (-> symbol?
                         bytes?
                         @solvable?
@@ -36,6 +37,29 @@
         (string->symbol name)))
   (define id (make-guid))
   (@constant (list sym-base id) type))
+
+(define (fresh-symbolic-like value)
+  (match value
+    [(app @type-of (and type (? @solvable?)))
+     (fresh-symbolic '__fresh-symbolic-like type)]
+    [(@union contents)
+     (apply @union (for/list ([pair contents])
+                     (cons (fresh-symbolic '__fresh-symbolic-like_choice @boolean?)
+                           (fresh-symbolic-like (cdr pair)))))]
+    [(box v)
+     (box (fresh-symbolic-like v))]
+    [(? list?)
+     (for/list ([v (in-list value)])
+       (fresh-symbolic-like v))]
+    [(cons x y)
+     (cons (fresh-symbolic-like x) (fresh-symbolic-like y))]
+    [(? vector?)
+     (define r
+       (for/vector ([v (in-vector value)])
+         (fresh-symbolic-like v)))
+     (if (immutable? value) (vector->immutable-vector r) r)]
+    [_
+     (error 'fresh-symbolic-like "unsupported value: ~a" value)]))
 
 (define (symbolic-from-id name id type)
   (@constant (list name (guid id)) type))
