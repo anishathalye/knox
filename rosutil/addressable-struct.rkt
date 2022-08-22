@@ -46,7 +46,7 @@
      #'(map-fields s (lambda (k v) body ...))]))
 
 (define (update-field struct-value field-name new-value)
-  (update-fields struct-value (@list (@cons field-name new-value))))
+  (update-fields struct-value (list (cons field-name new-value))))
 
 (define (show-diff self other)
   (define out-string (open-output-string))
