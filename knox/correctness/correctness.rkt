@@ -151,9 +151,13 @@
   (define f2 (result-state f-result))
   ;; circuit
   (define m (circuit-meta circuit))
-  (define c1 (@update-field (or override-c1 ((meta-new-symbolic m)))
-                            (circuit-reset-input-name circuit)
-                            (not (circuit-reset-input-signal circuit))))
+  (define c1 (@update-fields (or override-c1 ((meta-new-symbolic m)))
+                             (cons
+                              ;; reset is de-asserted
+                              (cons (circuit-reset-input-name circuit)
+                                    (not (circuit-reset-input-signal circuit)))
+                              ;; other inputs are idle
+                              (driver-idle driver))))
   ;; make sure reset line is de-asserted
   (define driver-expr (cons method-name (map (lambda (arg) (list 'quote arg)) args)))
   (define initial-interpreter-state
