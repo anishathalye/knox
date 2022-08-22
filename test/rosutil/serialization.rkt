@@ -68,12 +68,6 @@
   (define obj (list (bvneg x) (bvadd x y) (bvadd x (bv 1 10))))
   (check-equal? (deserialize (serialize obj)) obj))
 
-(test-case "collision"
-  (define x (fresh-symbolic 'x (bitvector 10)))
-  (define idnum (match x [(constant (list name (guid idnum)) _) idnum]))
-  (define y-ser `((s x ,idnum b))) ;; type is boolean: GUID collision (should never happen)
-  (check-exn #rx"type mismatch" (lambda () (deserialize y-ser))))
-
 (test-case "string"
   (struct person (name age extra) #:transparent)
   (define x (fresh-symbolic 'x integer?))
