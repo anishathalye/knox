@@ -64,6 +64,8 @@
     ;; weak hash of [circuit -> weak set of path conditions]
     (define crash-cache (make-weak-hasheq))
     (define empty-set (weak-set))
+    ;; we get a pretty big win by caching the result of the last query
+    (define last-ok-query (void))
     ;; not the most performant implementation...
     (define (check-crash-condition pc c)
       (when (and R (not (set-member? (hash-ref crash-cache c empty-set) pc)))
@@ -73,9 +75,12 @@
             (@or (@implies pc (R f1 c-crash))
                  (@implies pc (R f2 c-crash)))))
         (cond
-          [(eqv? q #t) (void)]
-          [(@unsat? (@verify (@assert q)))
-           (set-add! (hash-ref! crash-cache c (lambda () (weak-set))) pc)]
+          [(or (eqv? q #t) ; query evaluates to #t in Rosette, so no need to call solver?
+               (eq? q last-ok-query) ; already verified this query?
+               (@unsat? (@verify (@assert q))))
+           (unless (eqv? q #t) ; no point in caching #t
+             (set! last-ok-query q)) ; cache the result of this query
+           (set-add! (hash-ref! crash-cache c (lambda () (weak-set))) pc)] ; cache that this circuit/pc is ok
           [else (error "failed to prove crash safety")])))
 
     (define/public (debug!)
