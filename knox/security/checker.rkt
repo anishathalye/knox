@@ -195,7 +195,7 @@
         (unless (@unsat? crash-model)
           (println (@evaluate f crash-model))
           (println (@evaluate c-reset crash-model))
-          (error 'step! "crash condition does not hold")))
+          (error 'step! "recovery condition does not hold")))
       (define stepped
         (set
          (pairing
