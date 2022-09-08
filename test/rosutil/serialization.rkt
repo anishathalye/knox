@@ -36,7 +36,7 @@
   (define p (person "Alice" x))
   (check-exn #rx"unsupported type" (lambda () (serialize p)))
   (define sr (make-struct-register))
-  (register-struct sr person?)
+  (register-struct! sr person?)
   (check-exn #rx"unknown type person\\?" (lambda () (deserialize (serialize p sr))))
   (check-equal? (deserialize (serialize p sr) sr) p))
 
@@ -73,7 +73,7 @@
   (define x (fresh-symbolic 'x integer?))
   (define p (person "Alice" x (bv 3 64)))
   (define sr (make-struct-register))
-  (register-struct sr person?)
+  (register-struct! sr person?)
   (check-equal? (deserialize (read (open-input-string (with-output-to-string (lambda () (write (serialize p sr)))))) sr) p))
 
 (test-case "bitvector type"
@@ -120,3 +120,13 @@
   (define x* (match t* [(expression _ _ (expression _ x) _ ...) x]))
   (define t** (* (- y*) (- x*) (+ y* x*)))
   (check-true (equal? t* t**)))
+
+(test-case "ite* and |- (guard)"
+  (define p (fresh-symbolic 'p boolean?))
+  (define q (fresh-symbolic 'q boolean?))
+  (define v (if p
+                (if q (vector 1) (vector 2))
+                (vector 3)))
+  (define x (vector-ref v 0))
+  (define x* (deserialize (serialize x)))
+  (check-equal? x x*))

@@ -1,20 +1,22 @@
 #lang racket/base
 
+(require (for-syntax racket/base syntax/parse racket/syntax))
+
 (require
  (prefix-in @ (combine-in
                rosette/safe
                (only-in rosette/base/core/term term-id)
                (only-in rosette/base/core/bitvector bv-value bv-type [bv? bv-constant?])
-               (only-in rosette/base/core/polymorphic =? ite)
+               (only-in rosette/base/core/polymorphic =? ite ite* [⊢ guard])
                (only-in rosette/base/core/type typed? get-type type-name type-construct type-deconstruct)))
  (only-in "convenience.rkt" guid fresh-symbolic symbolic-from-id)
  racket/match racket/set)
 
-(provide make-struct-register register-struct serialize deserialize)
+(provide make-struct-register register-struct! serialize deserialize)
 
 (define (make-struct-register) (make-hasheq))
 
-(define (register-struct struct-register struct-type [name-override #f])
+(define (register-struct! struct-register struct-type [name-override #f])
   (define name (or name-override (@type-name struct-type)))
   (hash-set! struct-register struct-type name))
 
@@ -23,6 +25,8 @@
    ;; polymorphic
    @=? '=?
    @ite 'ite
+   @ite* 'ite*
+   @guard 'guard
    ;; boolean
    @! '!
    @&& '&&
