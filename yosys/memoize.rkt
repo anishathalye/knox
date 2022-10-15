@@ -1,7 +1,8 @@
 #lang racket/base
 
-(require racket/function
-         (for-syntax racket/base syntax/parse))
+(require racket/function racket/match
+         (for-syntax racket/base syntax/parse)
+         (prefix-in @ rosette/safe))
 
 (provide new-memoization-context define/memoize1)
 
@@ -18,14 +19,17 @@
 
 (define (memoize1 proc)
   (define (memoized arg)
-    (let ([current-context (context)])
+    (let ([current-context (context)]
+          [assumes (@vc-assumes (@vc))]
+          [asserts (@vc-asserts (@vc))])
       (if current-context
-          (let ([arg-value (hash-ref current-context memoized #f)])
-            (if (and arg-value (eq? arg (car arg-value)))
-                (cdr arg-value)
-                (let ([value (proc arg)])
-                  (hash-set! current-context memoized (cons arg value))
-                  value)))
+          (match (hash-ref current-context memoized #f)
+            [(list (== assumes eq?) (== asserts eq?) (== arg eq?) value)
+             value]
+            [else
+             (let ([value (proc arg)])
+               (hash-set! current-context memoized (list assumes asserts arg value))
+               value)])
           (proc arg))))
   memoized)
 
