@@ -6,3 +6,5 @@
                "rosette"
                "rackunit-lib"
                "base"))
+
+(define license 'MIT)
