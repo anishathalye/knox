@@ -22,7 +22,7 @@
   (define/memoize1 (f x)
     (set! run-count (+ run-count 1))
     (* x 5))
-  (new-memoization-context
+  (with-memoization-context
    (check-equal? (f 3) 15)
    (check-equal? run-count 1)
    (check-equal? (f 3) 15)
@@ -33,7 +33,7 @@
   (define/memoize1 (f x)
     (set! run-count (+ run-count 1))
     (* x 5))
-  (new-memoization-context
+  (with-memoization-context
    (check-equal? (f 3) 15)
    (check-equal? run-count 1)
    (check-equal? (f 4) 20)
@@ -54,7 +54,7 @@
   ;; condition, (f1 b) will evaluate in Rosette to just 0; then, when
   ;; exploring the second branch of the conditional in f2, we'd use the
   ;; incorrect memoized value
-  (define res (new-memoization-context (f2 b)))
+  (define res (with-memoization-context (f2 b)))
   ;; with buggy (non-vc-sensitive) memoization, res would be (ite b 10 20)
   (check-equal? res (if b 10 21)))
 

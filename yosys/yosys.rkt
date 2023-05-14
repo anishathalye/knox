@@ -163,7 +163,7 @@
      #:with step (format-id stx "step")
      #'(begin
          (define (name state)
-           (new-memoization-context
+           (with-memoization-context
             (internal-copy-name state)))
          (define (step state) (name state))
          (provide name step))]
@@ -174,7 +174,7 @@
      #:with step (format-id stx "step")
      #'(begin
          (define (name state)
-           (new-memoization-context
+           (with-memoization-context
             (internal-copy-name state [field e])))
          (define (step state) (name state))
          (provide name step))]
@@ -185,7 +185,7 @@
      #:with step (format-id stx "step")
      #'(begin
          (define (name state)
-           (new-memoization-context
+           (with-memoization-context
             (internal-copy-name state [field e] ...)))
          (define (step state) (name state))
          (provide name step))]))
@@ -372,7 +372,7 @@
             (define (get-input state)
               (apply #,(format-id stx "input") (map (lambda (o) ((cdr o) state)) inputs)))
             (define (get-output state)
-              (new-memoization-context
+              (with-memoization-context
                (apply #,(format-id stx "output") (map (lambda (o) ((cdr o) state)) outputs))))
             (provide get-output)
             ;; packaging up this stuff nicely together

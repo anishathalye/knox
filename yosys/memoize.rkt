@@ -4,18 +4,20 @@
          (for-syntax racket/base syntax/parse)
          (prefix-in @ rosette/safe))
 
-(provide new-memoization-context define/memoize1)
+(provide with-memoization-context define/memoize1)
 
 (define context (make-parameter #f))
 
-(define (with-new-memoization-context proc)
-  (parameterize ([context (make-hasheq)])
-    (proc)))
+(define (with-memoization-context* proc)
+  (if (context)
+      (proc)
+      (parameterize ([context (make-hasheq)])
+        (proc))))
 
-(define-syntax (new-memoization-context stx)
+(define-syntax (with-memoization-context stx)
   (syntax-parse stx
     [(_ body ...)
-     #'(with-new-memoization-context (thunk body ...))]))
+     #'(with-memoization-context* (thunk body ...))]))
 
 (define (memoize1 proc)
   (define (memoized arg)
