@@ -372,7 +372,8 @@
             (define (get-input state)
               (apply #,(format-id stx "input") (map (lambda (o) ((cdr o) state)) inputs)))
             (define (get-output state)
-              (apply #,(format-id stx "output") (map (lambda (o) ((cdr o) state)) outputs)))
+              (new-memoization-context
+               (apply #,(format-id stx "output") (map (lambda (o) ((cdr o) state)) outputs))))
             (provide get-output)
             ;; packaging up this stuff nicely together
             (define metadata (meta
