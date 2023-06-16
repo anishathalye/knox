@@ -6,12 +6,17 @@
  racket/match
  (prefix-in @ rosette/safe))
 
-(provide overapproximate)
+(provide overapproximate overapproximate-symbolics)
 
 (define (overapproximate view)
   (if (join? view)
       (join (map overapproximate (join-contents view)))
       (overapproximate-term view)))
+
+(define (overapproximate-symbolics view)
+  (if (join? view)
+      (join (map overapproximate-symbolics (join-contents view)))
+      (overapproximate-symbolics-term view)))
 
 (define (any->datum s)
   (if (identifier? s) (syntax-e s) s))
@@ -27,3 +32,8 @@
         [name (any->datum name)])]
      [else '||]) ; give up
    (@type-of term)))
+
+(define (overapproximate-symbolics-term term)
+  (if (@concrete? term)
+      term
+      (overapproximate-term term)))
