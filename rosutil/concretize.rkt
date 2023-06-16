@@ -50,6 +50,8 @@
   (define vars (@symbolics term))
   (cond
     [(empty? vars) (values term (@unsat))] ; don't bother checking predicate here
+    ;; optimize the case where we try to concretize a bare symbolic variable
+    [(and (@constant? term) (eqv? predicate #t)) (values term (@sat))]
     [else
      (define model
        (if (eqv? predicate #t)
