@@ -81,11 +81,13 @@ Here are some files/directories of interest, and their overall purpose:
 
 ```bibtex
 @inproceedings{knox:osdi22,
-    author =    {Anish Athalye and M. Frans Kaashoek and Nickolai Zeldovich},
-    title =     {Verifying Hardware Security Modules with Information-Preserving Refinement},
-    month =     {jul},
-    year =      {2022},
-    booktitle = {Proceedings of the 16th USENIX Symposium on Operating Systems Design and Implementation~(OSDI)},
-    address =   {Carlsbad, CA},
+  author        = {Anish Athalye and M. Frans Kaashoek and Nickolai Zeldovich},
+  title         = {Verifying Hardware Security Modules with
+                  Information-Preserving Refinement},
+  year          = 2022,
+  month         = jul,
+  booktitle     = {Proceedings of the 16th USENIX Symposium on Operating
+                  Systems Design and Implementation~(OSDI 2022)},
+  address       = {Carlsbad, CA},
 }
 ```
