@@ -1,4 +1,4 @@
-# Knox [![Build Status](https://github.com/anishathalye/knox/workflows/CI/badge.svg)](https://github.com/anishathalye/knox/actions?query=workflow%3ACI)
+# Knox [![Build Status](https://github.com/anishathalye/knox/actions/workflows/ci.yml/badge.svg)](https://github.com/anishathalye/knox/actions/workflows/ci.yml)
 
 > Knox is a new framework that enables developers to build hardware security
 > modules (HSMs) with high assurance through formal verification. The goal is
