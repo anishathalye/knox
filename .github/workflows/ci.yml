@@ -9,21 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        racket-version: ['8.1', 'stable']
+        racket-version: ['8.1']
         racket-variant: ['BC', 'CS']
         allow-failure: [false]
         include:
+          - racket-version: 'stable'
+            racket-variant: 'CS'
+            allow-failure: false
           - racket-version: 'current'
             racket-variant: 'CS'
-            allow-failure: true
-          - racket-version: 'current'
-            racket-variant: 'BC'
             allow-failure: true
     continue-on-error: ${{ matrix.allow-failure }}
     name: Racket ${{ matrix.racket-version }} (${{ matrix.racket-variant }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: Bogdanp/setup-racket@v1.11
+      - uses: actions/checkout@v6
+      - uses: Bogdanp/setup-racket@v1.14
         with:
           architecture: x64
           version: ${{ matrix.racket-version }}
